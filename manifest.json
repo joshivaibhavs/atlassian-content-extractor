@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Confluence HTML Extractor",
+  "description": "Download Confluence wiki page content as clean HTML.",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Confluence HTML Extractor"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.atlassian.net/*"
+  ]
+}

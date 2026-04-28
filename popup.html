@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confluence HTML Extractor</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        width: 320px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        font-size: 14px;
+        color: #172b4d;
+        background: #fff;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e4e7ec;
+        background: #0052cc;
+        color: #fff;
+      }
+
+      header svg {
+        flex-shrink: 0;
+      }
+
+      header h1 {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .body {
+        padding: 16px;
+      }
+
+      .status-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 6px;
+        line-height: 1.5;
+      }
+
+      .status-row.disabled {
+        background: #f4f5f7;
+        color: #6b778c;
+      }
+
+      .status-row.warning {
+        background: #fff8e6;
+        color: #974f0c;
+      }
+
+      .status-row.ready {
+        background: #e3fcef;
+        color: #006644;
+      }
+
+      .status-row.error {
+        background: #ffebe6;
+        color: #bf2600;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 4px;
+      }
+
+      .disabled .status-dot { background: #97a0af; }
+      .warning  .status-dot { background: #ff991f; }
+      .ready    .status-dot { background: #36b37e; }
+      .error    .status-dot { background: #de350b; }
+
+      .status-row p {
+        font-size: 13px;
+      }
+
+      .download-area {
+        margin-top: 14px;
+      }
+
+      button#downloadBtn {
+        width: 100%;
+        padding: 10px 14px;
+        background: #0052cc;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      button#downloadBtn:hover:not(:disabled) {
+        background: #0065ff;
+      }
+
+      button#downloadBtn:disabled {
+        background: #b3d4ff;
+        cursor: default;
+      }
+
+      footer {
+        padding: 10px 16px;
+        border-top: 1px solid #e4e7ec;
+        font-size: 11px;
+        color: #97a0af;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <!-- Confluence logo-ish icon -->
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="20" height="20" rx="4" fill="white" fill-opacity="0.2"/>
+        <path d="M3 14.5c.3-.5 3.2-5 3.4-5.3.2-.3.4-.3.7-.1l2.7 1.8c.3.2.6.1.8-.2.2-.3 3.1-4.8 3.4-5.3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 5.5c-.3.5-3.2 5-3.4 5.3-.2.3-.4.3-.7.1l-2.7-1.8c-.3-.2-.6-.1-.8.2-.2.3-3.1 4.8-3.4 5.3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1>Confluence HTML Extractor</h1>
+    </header>
+
+    <div class="body">
+      <div id="statusBox" class="status-row disabled">
+        <div class="status-dot"></div>
+        <p id="statusMsg">Checking page…</p>
+      </div>
+      <div id="downloadArea" class="download-area" style="display:none;">
+        <button id="downloadBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 2v8m0 0L5 7m3 3l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Download as ZIP
+        </button>
+      </div>
+    </div>
+
+    <footer>Only active on *.atlassian.net wiki pages</footer>
+
+    <script src="vendor/jszip.min.js"></script>
+    <script src="vendor/turndown.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
