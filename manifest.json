@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Atlassian Content Extractor",
   "description": "Download Confluence pages and Jira issue content as clean HTML & Markdown.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "action": {
     "default_popup": "popup.html",
     "default_title": "Atlassian Content Extractor"

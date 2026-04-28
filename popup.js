@@ -10,10 +10,12 @@
  * @returns {Promise<ExportImage[]>}
  */
 async function collectImagesAndRewriteSrc(root) {
-  const imgElements = Array.from(root.querySelectorAll("img[src]")).filter((img) => {
-    const src = img.getAttribute("src") || "";
-    return src && !src.startsWith("data:");
-  });
+  const imgElements = Array.from(root.querySelectorAll("img[src]")).filter(
+    (img) => {
+      const src = img.getAttribute("src") || "";
+      return src && !src.startsWith("data:");
+    },
+  );
 
   const images = [];
 
@@ -37,7 +39,16 @@ async function collectImagesAndRewriteSrc(root) {
 
         const urlPath = absoluteUrl.split("?")[0];
         const urlExt = (urlPath.split(".").pop() || "").toLowerCase();
-        const knownExts = ["jpg", "jpeg", "png", "gif", "svg", "webp", "avif", "bmp"];
+        const knownExts = [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "svg",
+          "webp",
+          "avif",
+          "bmp",
+        ];
         const ext = knownExts.includes(urlExt)
           ? urlExt
           : (blob.type.split("/")[1] || "png").replace(/\+.*$/, "");
@@ -59,7 +70,7 @@ async function collectImagesAndRewriteSrc(root) {
       } catch {
         // Keep original src when image fetch fails.
       }
-    })
+    }),
   );
 
   return images;
@@ -78,7 +89,9 @@ async function extractArticle() {
 
   const clone = article.cloneNode(true);
 
-  const recommendations = clone.querySelector('[data-vc="eop-recommendations-wrapper"]');
+  const recommendations = clone.querySelector(
+    '[data-vc="eop-recommendations-wrapper"]',
+  );
   if (recommendations) {
     recommendations.remove();
   }
@@ -123,7 +136,13 @@ async function extractJiraIssue() {
     target = rootClone;
   }
 
-  const images = await collectImagesAndRewriteSrc(target);
+  let images = [];
+  try {
+    images = await collectImagesAndRewriteSrc(target);
+  } catch (err) {
+    console.error("Error collecting images:", err);
+  }
+
 
   return {
     html: target.outerHTML,
@@ -222,7 +241,8 @@ function detectPageMode(url) {
 
   return {
     mode: null,
-    reason: "Supported pages: Confluence wiki pages and Jira issue pages (/browse/ISSUE-123).",
+    reason:
+      "Supported pages: Confluence wiki pages and Jira issue pages (/browse/ISSUE-123).",
   };
 }
 
@@ -280,7 +300,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const fullMarkdown = `# ${escapeMarkdown(title)}\n\n${markdown}`;
 
       if (pageMode === "jira" && images.length === 0) {
-        const mdBlob = new Blob([fullMarkdown], { type: "text/markdown;charset=utf-8" });
+        const mdBlob = new Blob([fullMarkdown], {
+          type: "text/markdown;charset=utf-8",
+        });
         const mdUrl = URL.createObjectURL(mdBlob);
 
         const mdAnchor = document.createElement("a");
@@ -319,7 +341,10 @@ ${html}
         }
       }
 
-      const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+      });
       const objectUrl = URL.createObjectURL(zipBlob);
 
       const anchor = document.createElement("a");
