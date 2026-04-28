@@ -96,8 +96,6 @@ This repository is made available on an "as is" basis, without warranties or con
 
 By using this software, you accept that you do so at your own risk. The authors and contributors accept no responsibility or liability for any claim, loss, damage, or other obligation arising from the use of this repository or the software distributed from it, including direct, indirect, incidental, consequential, special, exemplary, or financial damages.
 
-If you publish this repository, add a dedicated `LICENSE` file with terms that match this section.
-
 ## Contributing
 
 Issues and pull requests are welcome. If you plan to add support for additional Atlassian page types, include the target URL pattern and the DOM selectors used for extraction in your proposal.
