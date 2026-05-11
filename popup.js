@@ -187,6 +187,69 @@ function escapeMarkdown(text) {
   return text.replace(/([\\`*_{}\[\]()#+\-.!])/g, "\\$1");
 }
 
+/**
+ * Escapes table cell content for Markdown table syntax.
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeMarkdownTableCell(text) {
+  return text.replace(/\|/g, "\\|");
+}
+
+/**
+ * Creates and configures a Turndown instance with table conversion support.
+ * @returns {TurndownService}
+ */
+function createTurndownService() {
+  const turndownService = new TurndownService();
+
+  turndownService.addRule("markdownTable", {
+    filter: (node) => node.nodeName === "TABLE",
+    replacement: (_, node) => {
+      const table = /** @type {HTMLTableElement} */ (node);
+      const rowNodes = Array.from(table.querySelectorAll("tr"));
+      if (rowNodes.length === 0) return "\n\n";
+
+      const rows = rowNodes
+        .map((row) => {
+          const cells = Array.from(row.querySelectorAll("th, td"));
+          if (cells.length === 0) return null;
+
+          return cells.map((cell) => {
+            const cellMarkdown = turndownService
+              .turndown(cell.innerHTML)
+              .replace(/\r\n/g, "\n")
+              .replace(/\n{2,}/g, "\n")
+              .replace(/\n/g, "<br>")
+              .trim();
+
+            return escapeMarkdownTableCell(cellMarkdown);
+          });
+        })
+        .filter((row) => row && row.length > 0);
+
+      if (rows.length === 0) return "\n\n";
+
+      const maxCols = rows.reduce((max, row) => Math.max(max, row.length), 0);
+      const normalizedRows = rows.map((row) => {
+        const next = row.slice();
+        while (next.length < maxCols) next.push("");
+        return next;
+      });
+
+      const header = normalizedRows[0];
+      const separator = new Array(maxCols).fill("---");
+      const body = normalizedRows.slice(1);
+
+      const toLine = (cols) => `| ${cols.join(" | ")} |`;
+      const lines = [toLine(header), toLine(separator), ...body.map(toLine)];
+      return `\n\n${lines.join("\n")}\n\n`;
+    },
+  });
+
+  return turndownService;
+}
+
 const DOWNLOAD_BTN_INNER = `
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 2v8m0 0L5 7m3 3l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -295,7 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { html, title, images } = result.result;
       const slug = toSlug(title) || "confluence-page";
 
-      const turndownService = new TurndownService();
+      const turndownService = createTurndownService();
       const markdown = turndownService.turndown(html);
       const fullMarkdown = `# ${escapeMarkdown(title)}\n\n${markdown}`;
 
