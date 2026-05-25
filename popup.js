@@ -78,16 +78,67 @@ async function collectImagesAndRewriteSrc(root) {
 
 /**
  * Runs inside the page context (via chrome.scripting.executeScript).
- * Clones the <article> element, strips the recommendations wrapper,
+ * Prefers cloning the Confluence main content container, falling back to
+ * the full <article> element for backward compatibility.
+ * Strips the recommendations wrapper,
  * and returns cleaned html/title/images.
  *
  * @returns {Promise<{ html: string, title: string, images: ExportImage[] } | null>}
  */
 async function extractArticle() {
+  const preferredSelectors = [
+    '[data-vc="view-page-main-content-container"]',
+    '[data-testid="view-page-main-content-container"]',
+    '[data-testid="view-page-main-content"]',
+    '[data-testid="content-body"]',
+    "#main-content",
+    ".wiki-content",
+  ];
   const article = document.querySelector("article");
-  if (!article) return null;
 
-  const clone = article.cloneNode(true);
+  console.log("Article element:", article);
+
+  let source = null;
+
+  if (article) {
+    for (const selector of preferredSelectors) {
+      const candidate = article.querySelector(selector);
+      console.log(`LOOP1: Trying selector "${selector}" within article:`, candidate);
+      if (candidate) {
+        source = candidate;
+        break;
+      }
+    }
+  }
+
+  if (!source) {
+    for (const selector of preferredSelectors) {
+      const candidate = document.querySelector(selector);
+      console.log(`LOOP2: Trying selector "${selector}" in document:`, candidate);
+      if (candidate) {
+        source = candidate;
+        break;
+      }
+    }
+  }
+
+  if (!source) {
+    console.log("Falling back to article element as source.");
+    source = article;
+  }
+
+  if (!source) {
+    source = document.querySelector("main, [role='main'], #ak-main-content");
+  }
+
+  // Last-resort fallback to avoid false negatives when Atlassian changes DOM.
+  if (!source) {
+    source = document.body;
+  }
+
+  if (!source) return null;
+
+  const clone = source.cloneNode(true);
 
   const recommendations = clone.querySelector(
     '[data-vc="eop-recommendations-wrapper"]',
@@ -96,7 +147,12 @@ async function extractArticle() {
     recommendations.remove();
   }
 
-  const images = await collectImagesAndRewriteSrc(clone);
+  let images = [];
+  try {
+    images = await collectImagesAndRewriteSrc(clone);
+  } catch (err) {
+    console.error("Error collecting Confluence images:", err);
+  }
 
   return {
     html: clone.outerHTML,
@@ -344,18 +400,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     btn.textContent = "Extracting…";
 
     try {
-      const [result] = await chrome.scripting.executeScript({
+      const executionResults = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: pageMode === "jira" ? extractJiraIssue : extractArticle,
       });
 
-      if (!result?.result) {
+      const resolvedResult = executionResults.find((entry) => {
+        return (
+          entry &&
+          entry.result &&
+          typeof entry.result.html === "string" &&
+          typeof entry.result.title === "string" &&
+          Array.isArray(entry.result.images)
+        );
+      });
+
+      if (!resolvedResult?.result) {
+        console.error("No exportable result returned.", executionResults);
         setStatus("error", "Could not find exportable content on this page.");
         resetBtn(btn);
         return;
       }
 
-      const { html, title, images } = result.result;
+      const { html, title, images } = resolvedResult.result;
       const slug = toSlug(title) || "confluence-page";
 
       const turndownService = createTurndownService();
